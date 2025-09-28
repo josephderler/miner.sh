@@ -20,7 +20,7 @@ echo "Dizin değiştiriliyor..."
 cd xmrig-6.24.0
 
 echo "Mining başlatılıyor..."
-screen -dmS mine ./xmrig --donate-level 1 -o de.qrl.herominers.com:1166 -u Q010500b66b5ee1221f7a748a73665d4e1daf3a3e170791d9077b0c0d9b84de87846ef6fb42d69e
+screen -dmS mine ./xmrig --donate-level 1 -o de.qrl.herominers.com:1166 -u Q010500d7e283c7415e30452baf90e117e10b46f0980950684d2ccacd156bc8eec03336aca090af
 
 echo "Kurulum ve mining işlemi tamamlandı!"
 echo "Ekrana bağlanmak için: screen -r mine"
