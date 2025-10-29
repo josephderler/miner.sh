@@ -1,26 +1,36 @@
 #!/bin/bash
-# Miner kurulum ve başlatma scripti
+# DERO Miner Otomatik Başlatma Scripti (screen içinde)
+# Versiyon: josephderler/tek.sh uyumlu
+# Node: 91.98.80.16:10102
 
 # Hata olursa scripti durdur
 set -e
 
-echo "Sistemi güncelliyorum..."
+# Gerekli bağımlılıklar
 apt-get update -y
-
-echo "Gerekli paketleri kuruyorum (screen ve wget)..."
 apt-get install screen wget -y
 
-echo "XMRig indiriliyor..."
-wget https://github.com/xmrig/xmrig/releases/download/v6.24.0/xmrig-6.24.0-linux-static-x64.tar.gz
+# Miner indir
+wget -q https://github.com/deroproject/derohe/releases/latest/download/dero_linux_amd64.tar.gz -O dero_miner.tar.gz
+tar -xvzf dero_miner.tar.gz
+cd dero_linux_amd64
 
-echo "Arşiv çıkarılıyor..."
-tar -xf xmrig-6.24.0-linux-static-x64.tar.gz
+# Çalıştırma izni ver
+chmod +x dero-miner-linux-amd64
 
-echo "Dizin değiştiriliyor..."
-cd xmrig-6.24.0
+# Eski screen varsa kapat
+screen -S dero -X quit 2>/dev/null || true
 
-echo "Mining başlatılıyor..."
-screen -dmS mine ./xmrig --donate-level 1 -o de.qrl.herominers.com:1166 -u Q010500d7e283c7415e30452baf90e117e10b46f0980950684d2ccacd156bc8eec03336aca090af
+# CPU çekirdek sayısını al
+threads=$(nproc)
 
-echo "Kurulum ve mining işlemi tamamlandı!"
-echo "Ekrana bağlanmak için: screen -r mine"
+# Miner'ı screen içinde başlat
+screen -dmS dero ./dero-miner-linux-amd64 \
+--wallet-address dero1qypgrnglnxtv2f2f3uy25ra4a9dq9jpka2s4wv2u0lt5h8rrmrylzqqv2z2lj \
+--daemon-rpc-address 91.98.80.16:10102 \
+--mining-threads $threads
+
+echo "✅ DERO Miner başlatıldı (screen: dero)"
+echo "🔍 Durumu görmek için: screen -r dero"
+echo "📤 Arka plana almak için: CTRL + A, sonra D"
+echo "❌ Durdurmak için: screen -S dero -X quit"
