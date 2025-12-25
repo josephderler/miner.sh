@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 AWS sunucusunda çalışacak basit log gönderme scripti
@@ -7,6 +8,7 @@ Her AWS sunucusuna bu scripti koy, otomatik log gönderir
 import requests
 import time
 from datetime import datetime
+from collections import defaultdict
 
 # AYARLAR
 BOT_TOKEN = "8525742123:AAH47p7YEfqC4NgXdcYzsM759ZbHmH_9QTI"
@@ -36,6 +38,7 @@ def get_region_name(region):
 
 # Son okunan pozisyon
 last_position = 0
+last_report_time = time.time()
 
 print(f"Log gönderme başlatıldı: {SERVER_NAME}")
 
@@ -53,10 +56,19 @@ while True:
             if log_content:
                 message = f"🔔 <b>Yeni Log - {SERVER_NAME}</b>\n"
                 message += f"📧 {ACCOUNT}\n"
-                message += f"🌍 {get_region_name(REGION)}\n"
                 message += f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 message += f"<code>{log_content}</code>"
                 send_telegram(message)
+        
+        # Her saat başı sunucu durumunu gönder (merkezi bot toplayacak)
+        if time.time() - last_report_time >= 3600:  # 1 saat
+            report = f"📊 <b>Sunucu Durumu</b>\n"
+            report += f"📧 {ACCOUNT}\n"
+            report += f"📦 Sunucu: {SERVER_NAME}\n"
+            report += f"✅ Durum: Çevrimiçi\n"
+            report += f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            send_telegram(report)
+            last_report_time = time.time()
         
         time.sleep(60)  # Her 1 dakikada bir kontrol et
         
@@ -66,4 +78,3 @@ while True:
     except Exception as e:
         print(f"Hata: {e}")
         time.sleep(60)
-
